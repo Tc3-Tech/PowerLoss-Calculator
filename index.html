@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Power Calculator</title>
+    <!-- React Dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Extract React Hooks -->
+    <script>
+        const { useState, useEffect } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
+    </script>
 </head>
 <body>
     <div id="root"></div>
@@ -211,7 +217,8 @@
             );
         };
 
-        ReactDOM.render(<PowerLossCalculator />, document.getElementById('root'));
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PowerLossCalculator />);
     </script>
 </body>
 </html>
