@@ -10,11 +10,22 @@
         }
         .container { 
             max-width: 1200px;
-            margin: -20px auto; 
-            padding: 20px;
-/*             overflow-y: auto; 
-            transform: scale(0.9); /* Adjust between 0 and 1 */
- /*           transform-origin: top center; */
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        .layout-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        .left-column {
+            grid-column: 1;
+        }
+        .right-column {
+            grid-column: 2;
+            position: sticky;
+            top: 0;
         }
         .controls { 
             display: grid; 
@@ -83,7 +94,6 @@
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            margin-top: 20px;
             background: white;
             border-radius: 12px;
             overflow: hidden;
@@ -104,76 +114,83 @@
 </head>
 <body>
     <div class="container">
-        <div class="controls">
-            <div class="control-group">
-                <h3>Load Settings</h3>
-                <label>Power (kW):</label>
-                <input type="number" id="power" value="14" min="0.1" max="500" step="0.1">
-                <div class="load-examples">
-                    Common Examples:
-                    <ul>
-                        <li onclick="document.getElementById('power').value='1.2';calculateData()">Toaster: 1.2 kW</li>
-                        <li onclick="document.getElementById('power').value='3.0';calculateData()">Electric Kettle: 3.0 kW</li>
-                        <li onclick="document.getElementById('power').value='14';calculateData()">Home Charging: 14 kW</li>
-                        <li onclick="document.getElementById('power').value='250';calculateData()">DC Fast Charging: 250 kW</li>
-                        <li onclick="document.getElementById('power').value='500';calculateData()">Peak Power Draw: 500 kW</li>
-                    </ul>
+        <div class="layout-container">
+            <div class="left-column">
+                <div class="controls">
+                    <div class="control-group">
+                        <h3>Load Settings</h3>
+                        <label>Power (kW):</label>
+                        <input type="number" id="power" value="14" min="0.1" max="500" step="0.1">
+                        <div class="load-examples">
+                            Common Examples:
+                            <ul>
+                                <li onclick="document.getElementById('power').value='1.2';calculateData()">Toaster: 1.2 kW</li>
+                                <li onclick="document.getElementById('power').value='3.0';calculateData()">Electric Kettle: 3.0 kW</li>
+                                <li onclick="document.getElementById('power').value='14';calculateData()">Home Charging: 14 kW</li>
+                                <li onclick="document.getElementById('power').value='250';calculateData()">DC Fast Charging: 250 kW</li>
+                                <li onclick="document.getElementById('power').value='500';calculateData()">Peak Power Draw: 500 kW</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h3>Wire Settings</h3>
+                        <label>Wire Type:</label>
+                        <select id="wireGauge">
+                            <optgroup label="Standard Wires">
+                                <option value="10">10 AWG (0.9989 Ω/1000ft)</option>
+                                <option value="12">12 AWG (1.588 Ω/1000ft)</option>
+                                <option value="14">14 AWG (2.525 Ω/1000ft)</option>
+                                <option value="16">16 AWG (4.016 Ω/1000ft)</option>
+                            </optgroup>
+                            <optgroup label="HV Cables">
+                                <option value="ev_35">35mm² HV Cable (0.524 Ω/1000ft)</option>
+                                <option value="ev_50" selected>50mm² HV Cable (0.367 Ω/1000ft)</option>
+                                <option value="ev_70">70mm² HV Cable (0.262 Ω/1000ft)</option>
+                                <option value="ev_95">95mm² HV Cable (0.193 Ω/1000ft)</option>
+                            </optgroup>
+                        </select>
+                        <div class="wire-visualization">
+                            <div id="wireCircle" class="wire-circle"></div>
+                            <div id="wireInfo" class="wire-info"></div>
+                        </div>
+                        <label>Wire Length (ft):</label>
+                        <input type="number" id="wireLength" value="10" min="1" max="100">
+                    </div>
+                    
+                    <div class="control-group">
+                        <h3>Voltage Range</h3>
+                        <label>Min Voltage:</label>
+                        <input type="number" id="minVoltage" value="12" min="1">
+                        <label>Max Voltage:</label>
+                        <input type="number" id="maxVoltage" value="800" min="1">
+                    </div>
                 </div>
+
+                <div class="info-section">
+                    <div class="control-group">
+                        <h3>Current Setup</h3>
+                        <div id="setup-info"></div>
+                    </div>
+                    <div class="control-group">
+                        <h3>Key Concepts</h3>
+                        <div class="formula-content">
+                            • Higher current (I) causes more heating (P = I²R)<br>
+                            • Doubling voltage halves current for same power<br>
+                            • Thicker wires have less resistance<br>
+                            • Longer wires have more resistance<br>
+                            • Temperature rise depends on power loss
+                        </div>
+                    </div>
+                </div>
+
+                <canvas id="powerChart"></canvas>
             </div>
             
-            <div class="control-group">
-                <h3>Wire Settings</h3>
-                <label>Wire Type:</label>
-                <select id="wireGauge">
-                    <optgroup label="Standard Wires">
-                        <option value="16">16 AWG (4.016 Ω/1000ft)</option>
-                        <option value="14">14 AWG (2.525 Ω/1000ft)</option>
-                        <option value="12">12 AWG (1.588 Ω/1000ft)</option>
-                        <option value="10">10 AWG (0.9989 Ω/1000ft)</option>
-                    </optgroup>
-                    <optgroup label="HV Cables">
-                        <option value="ev_35">35mm² HV Cable (0.524 Ω/1000ft)</option>
-                        <option value="ev_50" selected>50mm² HV Cable (0.367 Ω/1000ft)</option>
-                        <option value="ev_70">70mm² HV Cable (0.262 Ω/1000ft)</option>
-                        <option value="ev_95">95mm² HV Cable (0.193 Ω/1000ft)</option>
-                    </optgroup>
-                </select>
-                <div class="wire-visualization">
-                    <div id="wireCircle" class="wire-circle"></div>
-                    <div id="wireInfo" class="wire-info"></div>
-                </div>
-                <label>Wire Length (ft):</label>
-                <input type="number" id="wireLength" value="10" min="1" max="100">
-            </div>
-            
-            <div class="control-group">
-                <h3>Voltage Range</h3>
-                <label>Min Voltage:</label>
-                <input type="number" id="minVoltage" value="12" min="1">
-                <label>Max Voltage:</label>
-                <input type="number" id="maxVoltage" value="800" min="1">
+            <div class="right-column">
+                <div id="tableContainer"></div>
             </div>
         </div>
-
-        <div class="info-section">
-            <div class="control-group">
-                <h3>Current Setup</h3>
-                <div id="setup-info"></div>
-            </div>
-            <div class="control-group">
-                <h3>Key Concepts</h3>
-                <div class="formula-content">
-                    • Higher current (I) causes more heating (P = I²R)<br>
-                    • Doubling voltage halves current for same power<br>
-                    • Thicker wires have less resistance<br>
-                    • Longer wires have more resistance<br>
-                    • Temperature rise depends on power loss
-                </div>
-            </div>
-        </div>
-
-        <canvas id="powerChart"></canvas>
-        <div id="tableContainer"></div>
     </div>
  <script>
         // Wire property constants
