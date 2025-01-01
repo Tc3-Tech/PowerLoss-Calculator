@@ -170,8 +170,8 @@
 
         function updateWireVisualization() {
             const wireGauge = document.getElementById('wireGauge').value;
-            const baseSize = 40; // Base size in pixels
-            const scaleFactor = wireDiameters[wireGauge] / wireDiameters['16']; // Scale relative to 16 AWG
+            const baseSize = 30; // Base size in pixels
+            const scaleFactor = Math.sqrt(wireDiameters[wireGauge] / wireDiameters['16']); // Square root for more reasonable scaling
             const size = baseSize * scaleFactor;
             
             const circle = document.getElementById('wireCircle');
