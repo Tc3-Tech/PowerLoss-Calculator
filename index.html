@@ -2,14 +2,74 @@
 <html>
 <head>
     <title>Power Loss Calculator</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
     <style>
-        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-        .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
-        .control-group { padding: 15px; background: #f0f0f0; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
-        th { background: #f5f5f5; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f7f9fc; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .controls { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 20px; 
+        }
+        .control-group { 
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .control-group h3 { 
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #e6e9ec;
+            padding-bottom: 10px;
+        }
+        input, select { 
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px;
+            border: 1px solid #dde1e7;
+            border-radius: 6px;
+        }
+        .wire-visualization {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        .wire-circle {
+            border: 2px solid #2c3e50;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        .wire-info {
+            margin-left: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        table { 
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        th, td { 
+            padding: 12px;
+            border: 1px solid #e6e9ec;
+        }
+        th { 
+            background: #f8fafc;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        tr:hover { background: #f7f9fc; }
     </style>
 </head>
 <body>
@@ -17,24 +77,40 @@
         <div class="controls">
             <div class="control-group">
                 <h3>Load Settings</h3>
-                <label>Power (Watts):</label><br>
-                <input type="number" id="power" value="1200" min="100" max="10000"><br>
+                <label>Power (Watts):</label>
+                <input type="number" id="power" value="1200" min="100" max="10000">
             </div>
             
             <div class="control-group">
                 <h3>Wire Settings</h3>
-                <label>Wire Gauge (AWG):</label><br>
-                <select id="wireGauge"></select><br>
-                <label>Wire Length (ft):</label><br>
+                <label>Wire Type:</label>
+                <select id="wireGauge">
+                    <optgroup label="Standard Wires">
+                        <option value="10">10 AWG (0.9989 Ω/1000ft)</option>
+                        <option value="12">12 AWG (1.588 Ω/1000ft)</option>
+                        <option value="14">14 AWG (2.525 Ω/1000ft)</option>
+                        <option value="16">16 AWG (4.016 Ω/1000ft)</option>
+                    </optgroup>
+                    <optgroup label="EV High Voltage Cables">
+                        <option value="ev_35">35mm² EV Cable (0.524 Ω/1000ft)</option>
+                        <option value="ev_50">50mm² EV Cable (0.367 Ω/1000ft)</option>
+                        <option value="ev_70">70mm² EV Cable (0.262 Ω/1000ft)</option>
+                    </optgroup>
+                </select>
+                <div class="wire-visualization">
+                    <div id="wireCircle" class="wire-circle"></div>
+                    <div id="wireInfo" class="wire-info"></div>
+                </div>
+                <label>Wire Length (ft):</label>
                 <input type="number" id="wireLength" value="50" min="1" max="1000">
             </div>
             
             <div class="control-group">
                 <h3>Voltage Range</h3>
-                <label>Min Voltage:</label><br>
-                <input type="number" id="minVoltage" value="12" min="1"><br>
-                <label>Max Voltage:</label><br>
-                <input type="number" id="maxVoltage" value="400" min="1">
+                <label>Min Voltage:</label>
+                <input type="number" id="minVoltage" value="12" min="1">
+                <label>Max Voltage:</label>
+                <input type="number" id="maxVoltage" value="800" min="1">
             </div>
         </div>
 
@@ -49,33 +125,58 @@
 
     <script>
         const wireResistance = {
-            10: 0.9989,
-            12: 1.588,
-            14: 2.525,
-            16: 4.016,
-            18: 6.385,
-            20: 10.15
+            '10': 0.9989,
+            '12': 1.588,
+            '14': 2.525,
+            '16': 4.016,
+            'ev_35': 0.524,
+            'ev_50': 0.367,
+            'ev_70': 0.262
         };
 
-        // Populate wire gauge dropdown
-        const wireGaugeSelect = document.getElementById('wireGauge');
-        Object.entries(wireResistance).forEach(([gauge, resistance]) => {
-            const option = document.createElement('option');
-            option.value = gauge;
-            option.text = `${gauge} AWG (${resistance} Ω/1000ft)`;
-            wireGaugeSelect.appendChild(option);
-        });
-        wireGaugeSelect.value = '16';
+        const wireDiameters = {
+            '10': 2.588,
+            '12': 2.053,
+            '14': 1.628,
+            '16': 1.291,
+            'ev_35': 12.5,
+            'ev_50': 15.8,
+            'ev_70': 18.5
+        };
+
+        const wireComparisons = {
+            '10': "About the diameter of a drinking straw",
+            '12': "Similar to a pencil lead",
+            '14': "Like a thick paper clip",
+            '16': "Similar to a small paper clip",
+            'ev_35': "Like a Sharpie marker",
+            'ev_50': "Similar to a garden hose",
+            'ev_70': "About the width of a quarter dollar"
+        };
 
         let chart = null;
 
+        function updateWireVisualization() {
+            const wireGauge = document.getElementById('wireGauge').value;
+            const baseSize = 20; // Base size in pixels
+            const scaleFactor = wireDiameters[wireGauge] / wireDiameters['16']; // Scale relative to 16 AWG
+            const size = baseSize * scaleFactor;
+            
+            const circle = document.getElementById('wireCircle');
+            circle.style.width = `${size}px`;
+            circle.style.height = `${size}px`;
+            
+            const info = document.getElementById('wireInfo');
+            info.textContent = wireComparisons[wireGauge];
+        }
+
         function calculateData() {
             const power = parseFloat(document.getElementById('power').value);
-            const wireGauge = parseFloat(document.getElementById('wireGauge').value);
+            const wireGauge = document.getElementById('wireGauge').value;
             const wireLength = parseFloat(document.getElementById('wireLength').value);
             const minVoltage = parseFloat(document.getElementById('minVoltage').value);
             const maxVoltage = parseFloat(document.getElementById('maxVoltage').value);
-            const dataPoints = 5;
+            const dataPoints = 10;
 
             const resistance = (wireResistance[wireGauge] * wireLength) / 1000;
             const voltageStep = (maxVoltage - minVoltage) / (dataPoints - 1);
@@ -88,19 +189,21 @@
 
                 return {
                     voltage: Math.round(voltage),
-                    current: Math.round(current * 10) / 10,
-                    powerLoss: Math.round(powerLoss * 10) / 10,
-                    efficiency: Math.round(efficiency * 10) / 10
+                    current: Math.round(current * 100) / 100,
+                    powerLoss: Math.round(powerLoss * 100) / 100,
+                    efficiency: Math.round(efficiency * 100) / 100
                 };
             });
 
-            // Update setup info
+            const wireName = document.getElementById('wireGauge').selectedOptions[0].text;
             document.getElementById('setup-info').innerHTML = `
-                Total Wire Resistance: ${resistance.toFixed(3)} Ω<br>
-                Wire: ${wireGauge} AWG, ${wireLength} ft<br>
-                Load: ${power} Watts
+                <strong>Wire Details:</strong> ${wireName}<br>
+                <strong>Total Resistance:</strong> ${resistance.toFixed(4)} Ω<br>
+                <strong>Wire Length:</strong> ${wireLength} ft<br>
+                <strong>Load Power:</strong> ${power} Watts
             `;
 
+            updateWireVisualization();
             updateChart(data);
             updateTable(data);
         }
@@ -115,26 +218,64 @@
                 type: 'line',
                 data: {
                     labels: data.map(d => d.voltage),
-                    datasets: [{
-                        label: 'Power Loss (W)',
-                        data: data.map(d => d.powerLoss),
-                        borderColor: '#e74c3c',
-                        tension: 0.1
-                    }]
+                    datasets: [
+                        {
+                            label: 'Power Loss (W)',
+                            data: data.map(d => d.powerLoss),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Efficiency (%)',
+                            data: data.map(d => d.efficiency),
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Power Loss & Efficiency vs Voltage',
+                            font: { size: 16 }
+                        }
+                    },
                     scales: {
                         x: {
                             title: {
                                 display: true,
                                 text: 'System Voltage (V)'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
                             }
                         },
                         y: {
                             title: {
                                 display: true,
                                 text: 'Power Loss (W)'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        y1: {
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Efficiency (%)'
+                            },
+                            min: 0,
+                            max: 100,
+                            grid: {
+                                drawOnChartArea: false
                             }
                         }
                     }
@@ -168,12 +309,10 @@
             document.getElementById('tableContainer').innerHTML = table;
         }
 
-        // Add event listeners to all inputs
         document.querySelectorAll('input, select').forEach(input => {
             input.addEventListener('change', calculateData);
         });
 
-        // Initial calculation
         calculateData();
     </script>
 </body>
