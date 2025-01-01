@@ -122,10 +122,18 @@
                 <h3>Wire Settings</h3>
                 <label>Wire Type:</label>
                 <select id="wireGauge">
-                    <option value="10">10 AWG (0.9989 Ω/1000ft)</option>
-                    <option value="12" selected>12 AWG (1.588 Ω/1000ft)</option>
-                    <option value="14">14 AWG (2.525 Ω/1000ft)</option>
-                    <option value="16">16 AWG (4.016 Ω/1000ft)</option>
+                    <optgroup label="Standard Wires">
+                        <option value="10">10 AWG (0.9989 Ω/1000ft)</option>
+                        <option value="12">12 AWG (1.588 Ω/1000ft)</option>
+                        <option value="14">14 AWG (2.525 Ω/1000ft)</option>
+                        <option value="16">16 AWG (4.016 Ω/1000ft)</option>
+                    </optgroup>
+                    <optgroup label="HV Cables">
+                        <option value="ev_35">35mm² HV Cable (0.524 Ω/1000ft)</option>
+                        <option value="ev_50" selected>50mm² HV Cable (0.367 Ω/1000ft)</option>
+                        <option value="ev_70">70mm² HV Cable (0.262 Ω/1000ft)</option>
+                        <option value="ev_95">95mm² HV Cable (0.193 Ω/1000ft)</option>
+                    </optgroup>
                 </select>
                 <div class="wire-visualization">
                     <div id="wireCircle" class="wire-circle"></div>
@@ -164,34 +172,50 @@
         <canvas id="powerChart"></canvas>
         <div id="tableContainer"></div>
     </div>
-    <script>
+ <script>
         // Wire property constants
         const wireResistance = {
             '10': 0.9989,
             '12': 1.588,
             '14': 2.525,
-            '16': 4.016
+            '16': 4.016,
+            'ev_35': 0.524,  // 35mm² EV cable
+            'ev_50': 0.367,  // 50mm² EV cable
+            'ev_70': 0.262,  // 70mm² EV cable
+            'ev_95': 0.193   // 95mm² EV cable
         };
 
         const thermalCoefficient = {
             '10': 0.8,
             '12': 1.0,
             '14': 1.3,
-            '16': 1.6
+            '16': 1.6,
+            'ev_35': 0.25,   // Better heat dissipation
+            'ev_50': 0.20,   // due to specialized
+            'ev_70': 0.15,   // insulation and
+            'ev_95': 0.12    // construction
         };
 
         const wireDiameters = {
             '10': 2.588,
             '12': 2.053,
             '14': 1.628,
-            '16': 1.291
+            '16': 1.291,
+            'ev_35': 12.5,
+            'ev_50': 15.8,
+            'ev_70': 18.5,
+            'ev_95': 21.5
         };
 
         const wireComparisons = {
             '10': "About the diameter of a drinking straw",
             '12': "Similar to a pencil lead",
             '14': "Like a thick paper clip",
-            '16': "Similar to a small paper clip"
+            '16': "Similar to a small paper clip",
+            'ev_35': "Like a garden hose",
+            'ev_50': "Similar to a nickel coin",
+            'ev_70': "Like a quarter dollar",
+            'ev_95': "About the size of a penny stack"
         };
 
         const ambientTemp = 25;
@@ -387,6 +411,102 @@
                 </table>
             `;
             document.getElementById('tableContainer').innerHTML = table;
+        }
+
+        function updateChart(data) {
+            if (chart) {
+                chart.destroy();
+            }
+
+            const ctx = document.getElementById('powerChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.voltage),
+                    datasets: [
+                        {
+                            label: 'Power Loss (kW)',
+                            data: data.map(d => d.powerLoss),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Temperature (°C)',
+                            data: data.map(d => d.temperature),
+                            borderColor: '#f1c40f',
+                            backgroundColor: 'rgba(241, 196, 15, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y2'
+                        },
+                        {
+                            label: 'Efficiency (%)',
+                            data: data.map(d => d.efficiency),
+                            borderColor: '#2ecc71',
+                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Power Loss, Temperature & Efficiency vs Voltage',
+                            font: { size: 16 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Voltage (V)'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Power Loss (kW)'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        y1: {
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Efficiency (%)'
+                            },
+                            min: 90,
+                            max: 100,
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        },
+                        y2: {
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Temperature (°C)'
+                            },
+                            min: 20,
+                            max: 120,
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         // Initialize all event listeners and start the calculator
