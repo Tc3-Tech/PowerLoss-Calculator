@@ -12,8 +12,204 @@
 <body>
     <div id="root"></div>
     <script type="text/babel">
-        // Copy entire PowerLossCalculator component code here
-        [I can provide the full component code if you want]
+        const PowerLossCalculator = () => {
+            const [settings, setSettings] = useState({
+                power: 1200,
+                wireGauge: 16,
+                wireLength: 50,
+                minVoltage: 12,
+                maxVoltage: 400,
+                dataPoints: 20
+            });
+
+            const [resistance, setResistance] = useState(0.2);
+            const [data, setData] = useState([]);
+
+            const wireResistance = {
+                10: 0.9989,
+                12: 1.588,
+                14: 2.525,
+                16: 4.016,
+                18: 6.385,
+                20: 10.15
+            };
+
+            useEffect(() => {
+                const resistancePer1000Ft = wireResistance[settings.wireGauge];
+                const newResistance = (resistancePer1000Ft * settings.wireLength) / 1000;
+                setResistance(newResistance);
+            }, [settings.wireGauge, settings.wireLength]);
+
+            useEffect(() => {
+                const voltageStep = (settings.maxVoltage - settings.minVoltage) / (settings.dataPoints - 1);
+                const newData = Array.from({ length: settings.dataPoints }, (_, i) => {
+                    const voltage = settings.minVoltage + (i * voltageStep);
+                    const current = settings.power / voltage;
+                    const powerLoss = current * current * resistance;
+                    const efficiency = ((settings.power - powerLoss) / settings.power * 100);
+                    
+                    return {
+                        voltage: Math.round(voltage),
+                        current: Math.round(current * 10) / 10,
+                        powerLoss: Math.round(powerLoss * 10) / 10,
+                        efficiency: Math.round(efficiency * 10) / 10
+                    };
+                });
+                setData(newData);
+            }, [settings, resistance]);
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setSettings(prev => ({
+                    ...prev,
+                    [name]: parseFloat(value)
+                }));
+            };
+
+            return (
+                <div className="w-full max-w-4xl p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div className="p-4 bg-gray-50 rounded">
+                            <h3 className="font-semibold mb-4">Load Settings</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm mb-1">Power (Watts)</label>
+                                    <input
+                                        type="number"
+                                        name="power"
+                                        value={settings.power}
+                                        onChange={handleChange}
+                                        className="w-full p-2 border rounded"
+                                        min="100"
+                                        max="10000"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-gray-50 rounded">
+                            <h3 className="font-semibold mb-4">Wire Settings</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm mb-1">Wire Gauge (AWG)</label>
+                                    <select
+                                        name="wireGauge"
+                                        value={settings.wireGauge}
+                                        onChange={handleChange}
+                                        className="w-full p-2 border rounded"
+                                    >
+                                        {Object.keys(wireResistance).map(gauge => (
+                                            <option key={gauge} value={gauge}>
+                                                {gauge} AWG ({wireResistance[gauge]} Ω/1000ft)
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm mb-1">Wire Length (ft)</label>
+                                    <input
+                                        type="number"
+                                        name="wireLength"
+                                        value={settings.wireLength}
+                                        onChange={handleChange}
+                                        className="w-full p-2 border rounded"
+                                        min="1"
+                                        max="1000"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-gray-50 rounded">
+                            <h3 className="font-semibold mb-4">Voltage Range</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm mb-1">Min Voltage</label>
+                                    <input
+                                        type="number"
+                                        name="minVoltage"
+                                        value={settings.minVoltage}
+                                        onChange={handleChange}
+                                        className="w-full p-2 border rounded"
+                                        min="1"
+                                        max={settings.maxVoltage - 1}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm mb-1">Max Voltage</label>
+                                    <input
+                                        type="number"
+                                        name="maxVoltage"
+                                        value={settings.maxVoltage}
+                                        onChange={handleChange}
+                                        className="w-full p-2 border rounded"
+                                        min={settings.minVoltage + 1}
+                                        max="1000"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mb-8 p-4 bg-blue-50 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">Current Setup</h3>
+                        <p>Total Wire Resistance: {resistance.toFixed(3)} Ω</p>
+                        <p>Wire: {settings.wireGauge} AWG, {settings.wireLength} ft</p>
+                        <p>Load: {settings.power} Watts</p>
+                    </div>
+
+                    <div className="mb-8">
+                        <h3 className="text-lg font-semibold mb-4">Power Loss vs System Voltage</h3>
+                        <div style={{ width: '100%', height: 400 }}>
+                            <ResponsiveContainer>
+                                <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis 
+                                        dataKey="voltage" 
+                                        label={{ value: 'System Voltage (V)', position: 'bottom', offset: 40 }}
+                                    />
+                                    <YAxis 
+                                        label={{ value: 'Power Loss (W)', angle: -90, position: 'insideLeft' }}
+                                    />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Line 
+                                        type="monotone" 
+                                        dataKey="powerLoss" 
+                                        stroke="#e74c3c" 
+                                        name="Power Loss (W)"
+                                        strokeWidth={2}
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th className="p-2 text-left">Voltage (V)</th>
+                                    <th className="p-2 text-left">Current (A)</th>
+                                    <th className="p-2 text-left">Power Loss (W)</th>
+                                    <th className="p-2 text-left">Efficiency (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.map((row, index) => (
+                                    <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                                        <td className="p-2">{row.voltage}</td>
+                                        <td className="p-2">{row.current}</td>
+                                        <td className="p-2">{row.powerLoss}</td>
+                                        <td className="p-2">{row.efficiency}%</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
 
         ReactDOM.render(<PowerLossCalculator />, document.getElementById('root'));
     </script>
