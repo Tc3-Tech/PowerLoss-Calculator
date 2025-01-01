@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Power Loss Calculator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f7f9fc; }
         .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
@@ -77,8 +77,8 @@
         <div class="controls">
             <div class="control-group">
                 <h3>Load Settings</h3>
-                <label>Power (Watts):</label>
-                <input type="number" id="power" value="1200" min="100" max="10000">
+                <label>Power (kW):</label>
+                <input type="number" id="power" value="1.2" min="0.1" max="500" step="0.1">
             </div>
             
             <div class="control-group">
@@ -171,7 +171,7 @@
         }
 
         function calculateData() {
-            const power = parseFloat(document.getElementById('power').value);
+            const power = parseFloat(document.getElementById('power').value) * 1000; // Convert kW to W
             const wireGauge = document.getElementById('wireGauge').value;
             const wireLength = parseFloat(document.getElementById('wireLength').value);
             const minVoltage = parseFloat(document.getElementById('minVoltage').value);
@@ -200,7 +200,7 @@
                 <strong>Wire Details:</strong> ${wireName}<br>
                 <strong>Total Resistance:</strong> ${resistance.toFixed(4)} Ω<br>
                 <strong>Wire Length:</strong> ${wireLength} ft<br>
-                <strong>Load Power:</strong> ${power} Watts
+                <strong>Load Power:</strong> ${(power/1000).toFixed(1)} kW
             `;
 
             updateWireVisualization();
@@ -221,7 +221,7 @@
                     datasets: [
                         {
                             label: 'Power Loss (W)',
-                            data: data.map(d => d.powerLoss),
+                            data: data.map(d => d.powerLoss/1000), // Convert to kW
                             borderColor: '#e74c3c',
                             backgroundColor: 'rgba(231, 76, 60, 0.1)',
                             fill: true,
@@ -260,7 +260,7 @@
                         y: {
                             title: {
                                 display: true,
-                                text: 'Power Loss (W)'
+                                text: 'Power Loss (kW)'
                             },
                             grid: {
                                 color: 'rgba(0,0,0,0.05)'
@@ -299,7 +299,7 @@
                             <tr>
                                 <td>${row.voltage}</td>
                                 <td>${row.current}</td>
-                                <td>${row.powerLoss}</td>
+                                <td>${(row.powerLoss/1000).toFixed(2)}</td>
                                 <td>${row.efficiency}</td>
                             </tr>
                         `).join('')}
