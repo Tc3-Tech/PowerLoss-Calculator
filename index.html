@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>High Voltage Power Loss & Temperature Calculator</title>
+    <title>Wire Power Loss & Temperature Calculator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
         body { 
@@ -12,22 +12,6 @@
             max-width: 1200px; 
             margin: 0 auto; 
             padding: 20px; 
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .header h1 {
-            color: #2c3e50;
-            margin: 0;
-        }
-        .header p {
-            color: #666;
-            margin: 10px 0 0;
         }
         .controls { 
             display: grid; 
@@ -92,22 +76,6 @@
             gap: 20px;
             margin-bottom: 20px;
         }
-        .temperature-legend {
-            display: flex;
-            gap: 15px;
-            margin-top: 10px;
-            font-size: 0.9em;
-        }
-        .temp-indicator {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .temp-color {
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-        }
         table { 
             width: 100%;
             border-collapse: separate;
@@ -133,24 +101,19 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>Understanding High Voltage Safety & Efficiency</h1>
-            <p>Interactive calculator demonstrating why we use high voltage in electric vehicles despite its dangers</p>
-        </div>
-
         <div class="controls">
             <div class="control-group">
                 <h3>Load Settings</h3>
                 <label>Power (kW):</label>
-                <input type="number" id="power" value="11" min="0.1" max="500" step="0.1">
+                <input type="number" id="power" value="14" min="0.1" max="500" step="0.1">
                 <div class="load-examples">
-                    Common EV Examples:
+                    Common Examples:
                     <ul>
-                        <li onclick="document.getElementById('power').value='7.4';calculateData()">Level 2 Home: 7.4 kW</li>
-                        <li onclick="document.getElementById('power').value='11';calculateData()">3-Phase AC: 11 kW</li>
-                        <li onclick="document.getElementById('power').value='50';calculateData()">DC Fast: 50 kW</li>
-                        <li onclick="document.getElementById('power').value='150';calculateData()">Ultra Fast: 150 kW</li>
-                        <li onclick="document.getElementById('power').value='350';calculateData()">Maximum Power: 350 kW</li>
+                        <li onclick="document.getElementById('power').value='1.2';calculateData()">Toaster: 1.2 kW</li>
+                        <li onclick="document.getElementById('power').value='3.0';calculateData()">Electric Kettle: 3.0 kW</li>
+                        <li onclick="document.getElementById('power').value='14';calculateData()">Home Charging: 14 kW</li>
+                        <li onclick="document.getElementById('power').value='250';calculateData()">DC Fast Charging: 250 kW</li>
+                        <li onclick="document.getElementById('power').value='500';calculateData()">Peak Power Draw: 500 kW</li>
                     </ul>
                 </div>
             </div>
@@ -159,48 +122,23 @@
                 <h3>Wire Settings</h3>
                 <label>Wire Type:</label>
                 <select id="wireGauge">
-                    <optgroup label="Standard Wires">
-                        <option value="10">10 AWG (0.9989 Ω/1000ft)</option>
-                        <option value="12">12 AWG (1.588 Ω/1000ft)</option>
-                        <option value="14">14 AWG (2.525 Ω/1000ft)</option>
-                        <option value="16">16 AWG (4.016 Ω/1000ft)</option>
-                    </optgroup>
-                    <optgroup label="EV High Voltage Cables">
-                        <option value="ev_35" selected>35mm² EV Cable (0.524 Ω/1000ft)</option>
-                        <option value="ev_50">50mm² EV Cable (0.367 Ω/1000ft)</option>
-                        <option value="ev_70">70mm² EV Cable (0.262 Ω/1000ft)</option>
-                    </optgroup>
+                    <option value="10">10 AWG (0.9989 Ω/1000ft)</option>
+                    <option value="12" selected>12 AWG (1.588 Ω/1000ft)</option>
+                    <option value="14">14 AWG (2.525 Ω/1000ft)</option>
+                    <option value="16">16 AWG (4.016 Ω/1000ft)</option>
                 </select>
                 <div class="wire-visualization">
                     <div id="wireCircle" class="wire-circle"></div>
                     <div id="wireInfo" class="wire-info"></div>
                 </div>
-                <div class="temperature-legend">
-                    <div class="temp-indicator">
-                        <div class="temp-color" style="background: #2ecc71;"></div>
-                        <span>&lt;60°C</span>
-                    </div>
-                    <div class="temp-indicator">
-                        <div class="temp-color" style="background: #f1c40f;"></div>
-                        <span>&lt;75°C</span>
-                    </div>
-                    <div class="temp-indicator">
-                        <div class="temp-color" style="background: #e67e22;"></div>
-                        <span>&lt;90°C</span>
-                    </div>
-                    <div class="temp-indicator">
-                        <div class="temp-color" style="background: #e74c3c;"></div>
-                        <span>≥90°C</span>
-                    </div>
-                </div>
                 <label>Wire Length (ft):</label>
-                <input type="number" id="wireLength" value="50" min="1" max="1000">
+                <input type="number" id="wireLength" value="10" min="1" max="100">
             </div>
             
             <div class="control-group">
                 <h3>Voltage Range</h3>
                 <label>Min Voltage:</label>
-                <input type="number" id="minVoltage" value="200" min="1">
+                <input type="number" id="minVoltage" value="12" min="1">
                 <label>Max Voltage:</label>
                 <input type="number" id="maxVoltage" value="800" min="1">
             </div>
@@ -212,13 +150,13 @@
                 <div id="setup-info"></div>
             </div>
             <div class="control-group">
-                <h3>Calculation Formulas</h3>
+                <h3>Key Concepts</h3>
                 <div class="formula-content">
-                    <strong>Current:</strong> I = P ÷ V<br>
-                    <strong>Power Loss:</strong> P<sub>loss</sub> = I² × R<br>
-                    <strong>Wire Temperature:</strong> T = T<sub>ambient</sub> + (P<sub>loss</sub> × R<sub>thermal</sub>)<br>
-                    <strong>Efficiency:</strong> η = (P - P<sub>loss</sub>) ÷ P × 100%<br>
-                    <strong>Resistance:</strong> R = (ρ/1000ft) × Length
+                    • Higher current (I) causes more heating (P = I²R)<br>
+                    • Doubling voltage halves current for same power<br>
+                    • Thicker wires have less resistance<br>
+                    • Longer wires have more resistance<br>
+                    • Temperature rise depends on power loss
                 </div>
             </div>
         </div>
@@ -226,60 +164,48 @@
         <canvas id="powerChart"></canvas>
         <div id="tableContainer"></div>
     </div>
-
     <script>
-        // Wire electrical resistance in ohms per 1000 feet
+        // Wire property constants
         const wireResistance = {
             '10': 0.9989,
             '12': 1.588,
             '14': 2.525,
-            '16': 4.016,
-            'ev_35': 0.524,
-            'ev_50': 0.367,
-            'ev_70': 0.262
+            '16': 4.016
         };
 
-        // Thermal resistance in °C/W (estimated values)
-        const thermalResistance = {
-            '10': 0.42,
-            '12': 0.52,
-            '14': 0.65,
-            '16': 0.82,
-            'ev_35': 0.25,
-            'ev_50': 0.20,
-            'ev_70': 0.15
+        const thermalCoefficient = {
+            '10': 0.8,
+            '12': 1.0,
+            '14': 1.3,
+            '16': 1.6
         };
 
-        // Wire diameter in mm for visualization
         const wireDiameters = {
             '10': 2.588,
             '12': 2.053,
             '14': 1.628,
-            '16': 1.291,
-            'ev_35': 12.5,
-            'ev_50': 15.8,
-            'ev_70': 18.5
+            '16': 1.291
         };
 
-        // Wire size comparisons for visualization
         const wireComparisons = {
             '10': "About the diameter of a drinking straw",
             '12': "Similar to a pencil lead",
             '14': "Like a thick paper clip",
-            '16': "Similar to a small paper clip",
-            'ev_35': "Like a Sharpie marker",
-            'ev_50': "Similar to a garden hose",
-            'ev_70': "About the width of a quarter dollar"
+            '16': "Similar to a small paper clip"
         };
 
-        const ambientTemp = 25; // Ambient temperature in °C
+        const ambientTemp = 25;
         let chart = null;
 
+        function calculateTemperature(powerLoss, wireGauge) {
+            return ambientTemp + (powerLoss * thermalCoefficient[wireGauge] * 0.1);
+        }
+
         function getTemperatureColor(temp) {
-            if (temp < 60) return '#2ecc71'; // Safe - Green
-            if (temp < 75) return '#f1c40f'; // Warning - Yellow
-            if (temp < 90) return '#e67e22'; // High - Orange
-            return '#e74c3c'; // Critical - Red
+            if (temp < 45) return '#2ecc71';
+            if (temp < 60) return '#f1c40f';
+            if (temp < 75) return '#e67e22';
+            return '#e74c3c';
         }
 
         function updateWireVisualization(temperature) {
@@ -298,7 +224,7 @@
         }
 
         function calculateData() {
-            const power = parseFloat(document.getElementById('power').value) * 1000; // Convert to watts
+            const power = parseFloat(document.getElementById('power').value) * 1000;
             const wireGauge = document.getElementById('wireGauge').value;
             const wireLength = parseFloat(document.getElementById('wireLength').value);
             const minVoltage = parseFloat(document.getElementById('minVoltage').value);
@@ -312,13 +238,13 @@
                 const voltage = minVoltage + (i * voltageStep);
                 const current = power / voltage;
                 const powerLoss = current * current * resistance;
-                const temperature = ambientTemp + (powerLoss * thermalResistance[wireGauge]);
+                const temperature = calculateTemperature(powerLoss, wireGauge);
                 const efficiency = ((power - powerLoss) / power * 100);
 
                 return {
                     voltage: Math.round(voltage),
                     current: Math.round(current * 100) / 100,
-                    powerLoss: Math.round(powerLoss) / 1000, // Convert to kW
+                    powerLoss: Math.round(powerLoss) / 1000,
                     temperature: Math.round(temperature * 10) / 10,
                     efficiency: Math.round(efficiency * 100) / 100
                 };
@@ -328,11 +254,11 @@
             const avgTemp = data.reduce((sum, d) => sum + d.temperature, 0) / data.length;
             
             document.getElementById('setup-info').innerHTML = `
-                <strong>Wire Details:</strong> ${wireName}<br>
+                <strong>Wire Type:</strong> ${wireName}<br>
                 <strong>Total Resistance:</strong> ${resistance.toFixed(4)} Ω<br>
                 <strong>Wire Length:</strong> ${wireLength} ft<br>
                 <strong>Load Power:</strong> ${(power/1000).toFixed(1)} kW<br>
-                <strong>Average Wire Temperature:</strong> ${avgTemp.toFixed(1)}°C
+                <strong>Average Temperature:</strong> ${avgTemp.toFixed(1)}°C
             `;
 
             updateWireVisualization(avgTemp);
@@ -392,7 +318,7 @@
                         x: {
                             title: {
                                 display: true,
-                                text: 'System Voltage (V)'
+                                text: 'Voltage (V)'
                             },
                             grid: {
                                 color: 'rgba(0,0,0,0.05)'
@@ -413,7 +339,7 @@
                                 display: true,
                                 text: 'Efficiency (%)'
                             },
-                            min: 0,
+                            min: 90,
                             max: 100,
                             grid: {
                                 drawOnChartArea: false
@@ -426,7 +352,7 @@
                                 text: 'Temperature (°C)'
                             },
                             min: 20,
-                            max: 120,
+                            max: 80,
                             grid: {
                                 drawOnChartArea: false
                             }
@@ -435,7 +361,6 @@
                 }
             });
         }
-
         function updateTable(data) {
             const table = `
                 <table>
@@ -464,11 +389,11 @@
             document.getElementById('tableContainer').innerHTML = table;
         }
 
+        // Initialize all event listeners and start the calculator
         document.querySelectorAll('input, select').forEach(input => {
             input.addEventListener('change', calculateData);
         });
 
-        // Initialize the calculator
         calculateData();
     </script>
 </body>
