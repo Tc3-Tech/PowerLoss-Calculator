@@ -75,7 +75,7 @@
             const wireLength = parseFloat(document.getElementById('wireLength').value);
             const minVoltage = parseFloat(document.getElementById('minVoltage').value);
             const maxVoltage = parseFloat(document.getElementById('maxVoltage').value);
-            const dataPoints = 20;
+            const dataPoints = 5;
 
             const resistance = (wireResistance[wireGauge] * wireLength) / 1000;
             const voltageStep = (maxVoltage - minVoltage) / (dataPoints - 1);
